@@ -39,6 +39,7 @@ namespace jsb_binview
 						{
 							case "01":
 								MessageBox.Show("This is a JSB binary version 1 file");
+								breader.Close(); //Close the file so that it can re-opened for getting the data chunk count
 								DisplayDataChunkList(1);
 								break;
 							case "02":
@@ -73,8 +74,11 @@ namespace jsb_binview
 					ClearEverything();
 					txtBinaryVersion.Text = "Version 1 - File Storage (BN01)";
 					//Need to find out how many 'files' are contained in this v1 binary
-					int dCount = GetDataChunkCount(1);
+					int dCount = GetDataChunkCount(binFileLocation, 1);
 					txtDataChunkCount.Text = "Files (" + dCount + ")";
+
+					//Call the function to load files into data view along with the data size
+					DisplayVersion1FileInfo(dCount);
 					break;
 			}
 		}
@@ -86,11 +90,43 @@ namespace jsb_binview
 			txtDataChunkCount.Clear();
 		}
 
-		private static int GetDataChunkCount(int dType)
+		private static int GetDataChunkCount(string dSource, int dType)
 		{
-			//put binary reader here
+			
 
-			return dType; //TODO: change dtype to some new integer
+			switch (dType)
+			{
+				//If binary version 1 we get the number of files contained
+				case 1:
+					using (BinaryReader breader = new BinaryReader(new FileStream(dSource, FileMode.Open)))
+					{
+						byte[] dCountAsBytes = new byte[4];
+						breader.BaseStream.Seek(8, SeekOrigin.Begin);
+						breader.Read(dCountAsBytes, 0, 4);
+						int dCount = BitConverter.ToInt32(dCountAsBytes);
+						return dCount;
+					}
+			}
+
+			return 0;
+		}
+
+		private void DisplayVersion1FileInfo(int dCount)
+		{
+			//Function to read version 1 binary files and display each file name into a data view
+
+			//Byte arrays - we need to go through the file and grab all the file names, as well as the size of the file's data
+			byte[] bFileName = new byte[dCount];	//File name
+			byte[] bDataLength = new byte[4]; //Length of file data
+			int currentOffset = 12;
+
+			using (BinaryReader breader = new BinaryReader(new FileStream(binFileLocation, FileMode.Open)))
+			{
+				for (int i = 0; i < dCount; i++)
+				{
+
+				}
+			}
 		}
 
 		private void btnOpen_Click(object sender, EventArgs e)
